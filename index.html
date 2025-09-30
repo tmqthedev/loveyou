@@ -22,6 +22,20 @@ canvas {
   </style>
  </HEAD>
  <BODY>
+  <!-- Audio player cho nhạc nền -->
+  <audio id="backgroundMusic" autoplay loop preload="auto" style="display: none;">
+    <source src="background_music.mp3" type="audio/mpeg">
+    <source src="background_music.ogg" type="audio/ogg">
+    Trình duyệt của bạn không hỗ trợ audio.
+  </audio>
+
+  <!-- Nút điều khiển nhạc -->
+  <div id="musicControls" style="position: fixed; top: 15px; left: 15px; z-index: 1000; color: white; font-family: Arial, sans-serif;">
+    <button id="playPauseBtn" onclick="toggleMusic()" style="background: rgba(255,105,180,0.3); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 14px; backdrop-filter: blur(10px);">
+      🎵 MUSIC: ON
+    </button>
+  </div>
+
   <div class="box">
     <canvas id="pinkboard"></canvas>
   </div>
@@ -268,6 +282,55 @@ var ParticlePool = (function() {
     render();
   }, 10);
 })(document.getElementById('pinkboard'));
+
+// JavaScript để điều khiển nhạc nền
+var isPlaying = true;
+var audio = document.getElementById('backgroundMusic');
+
+function toggleMusic() {
+  var btn = document.getElementById('playPauseBtn');
+  
+  if (isPlaying) {
+    audio.pause();
+    btn.innerHTML = '🔇 Nhạc: OFF';
+    btn.style.background = 'rgba(128,128,128,0.3)';
+    isPlaying = false;
+  } else {
+    audio.play().catch(function(error) {
+      console.log('Không thể phát nhạc:', error);
+    });
+    btn.innerHTML = '🎵 Nhạc: ON';
+    btn.style.background = 'rgba(255,105,180,0.3)';
+    isPlaying = true;
+  }
+}
+
+// Xử lý autoplay và khởi tạo
+document.addEventListener('DOMContentLoaded', function() {
+  // Đặt âm lượng mặc định
+  audio.volume = 0.4;
+  
+  // Thử phát nhạc khi trang load
+  var playPromise = audio.play();
+  
+  if (playPromise !== undefined) {
+    playPromise.catch(function(error) {
+      console.log('Autoplay bị chặn, người dùng cần click để phát nhạc');
+      document.getElementById('playPauseBtn').innerHTML = '🔇 Nhạc: OFF';
+      document.getElementById('playPauseBtn').style.background = 'rgba(128,128,128,0.3)';
+      isPlaying = false;
+    });
+  }
+});
+
+// Phát nhạc khi người dùng click vào trang (để bypass autoplay policy)
+document.addEventListener('click', function() {
+  if (isPlaying && audio.paused) {
+    audio.play().catch(function(error) {
+      console.log('Không thể phát nhạc:', error);
+    });
+  }
+}, { once: true });
   </script>
   <div class="text" style="position: unset; text-align: center; color: white; font-family: 'Times New Roman', serif; font-style: italic;">
     <h1>love you whitney <span style="font-style: normal;">:3</span></h1>
