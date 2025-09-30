@@ -23,7 +23,7 @@ canvas {
  </HEAD>
  <BODY>
   <!-- Audio player cho nhạc nền -->
-  <audio id="backgroundMusic" autoplay loop preload="auto" style="display: none;">
+  <audio id="backgroundMusic" autoplay loop preload="auto" muted style="display: none;">
     <source src="background_music.mp3" type="audio/mpeg">
     <source src="background_music.ogg" type="audio/ogg">
     Trình duyệt của bạn không hỗ trợ audio.
@@ -286,22 +286,50 @@ var ParticlePool = (function() {
 // JavaScript để điều khiển nhạc nền
 var isPlaying = true;
 var audio = document.getElementById('backgroundMusic');
+var userInteracted = false;
 
 function toggleMusic() {
   var btn = document.getElementById('playPauseBtn');
   
   if (isPlaying) {
     audio.pause();
-    btn.innerHTML = '🔇 Nhạc: OFF';
+    btn.innerHTML = '🔇 Music: OFF';
     btn.style.background = 'rgba(128,128,128,0.3)';
     isPlaying = false;
   } else {
     audio.play().catch(function(error) {
-      console.log('Không thể phát nhạc:', error);
+      console.log('Cannot play music:', error);
     });
-    btn.innerHTML = '🎵 Nhạc: ON';
+    btn.innerHTML = '🎵 Music: ON';
     btn.style.background = 'rgba(255,105,180,0.3)';
     isPlaying = true;
+  }
+  userInteracted = true;
+}
+
+// Hàm thử phát nhạc
+function attemptAutoplay() {
+  if (!userInteracted && isPlaying) {
+    // Unmute trước khi phát
+    audio.muted = false;
+    
+    var playPromise = audio.play();
+    
+    if (playPromise !== undefined) {
+      playPromise.then(function() {
+        // Autoplay thành công
+        console.log('Music autoplay successful');
+        document.getElementById('playPauseBtn').innerHTML = '🎵 Music: ON';
+        document.getElementById('playPauseBtn').style.background = 'rgba(255,105,180,0.3)';
+      }).catch(function(error) {
+        // Autoplay failed - trying muted
+        console.log('Autoplay failed, trying muted:', error);
+        audio.muted = true;
+        audio.play().catch(function(mutedError) {
+          console.log('Cannot play music even when muted:', mutedError);
+        });
+      });
+    }
   }
 }
 
@@ -310,27 +338,49 @@ document.addEventListener('DOMContentLoaded', function() {
   // Đặt âm lượng mặc định
   audio.volume = 0.4;
   
-  // Thử phát nhạc khi trang load
-  var playPromise = audio.play();
+  // Luôn giữ trạng thái ON ban đầu
+  isPlaying = true;
+  document.getElementById('playPauseBtn').innerHTML = '🎵 Music: ON';
+  document.getElementById('playPauseBtn').style.background = 'rgba(255,105,180,0.3)';
   
-  if (playPromise !== undefined) {
-    playPromise.catch(function(error) {
-      console.log('Autoplay bị chặn, người dùng cần click để phát nhạc');
-      document.getElementById('playPauseBtn').innerHTML = '🔇 Nhạc: OFF';
-      document.getElementById('playPauseBtn').style.background = 'rgba(128,128,128,0.3)';
-      isPlaying = false;
-    });
-  }
+  // Thử phát nhạc sau 1 giây để đảm bảo page đã load hoàn toàn
+  setTimeout(attemptAutoplay, 1000);
 });
 
-// Phát nhạc khi người dùng click vào trang (để bypass autoplay policy)
+// Phát nhạc khi người dùng tương tác lần đầu
 document.addEventListener('click', function() {
-  if (isPlaying && audio.paused) {
-    audio.play().catch(function(error) {
-      console.log('Không thể phát nhạc:', error);
-    });
+  if (isPlaying && !userInteracted) {
+    audio.muted = false; // Unmute khi user click
+    if (audio.paused) {
+      audio.play().catch(function(error) {
+        console.log('Cannot play music after click:', error);
+      });
+    }
   }
 }, { once: true });
+
+// Thử phát nhạc khi user hover vào page (passive interaction)
+document.addEventListener('mousemove', function() {
+  if (isPlaying && !userInteracted) {
+    audio.muted = false; // Unmute khi user di chuyển chuột
+    if (audio.paused) {
+      audio.play().catch(function(error) {
+        console.log('Cannot play music after mousemove:', error);
+      });
+    }
+  }
+}, { once: true });
+
+// Thử phát nhạc khi page focus
+window.addEventListener('focus', function() {
+  if (isPlaying && audio.paused && !userInteracted) {
+    setTimeout(function() {
+      audio.play().catch(function(error) {
+        console.log('Cannot play music after focus:', error);
+      });
+    }, 500);
+  }
+});
   </script>
   <div class="text" style="position: unset; text-align: center; color: white; font-family: 'Times New Roman', serif; font-style: italic;">
     <h1>love you whitney <span style="font-style: normal;">:3</span></h1>
