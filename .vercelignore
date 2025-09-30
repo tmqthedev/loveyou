@@ -1,0 +1,17 @@
+# Git files
+.git
+.gitignore
+
+# Node modules (if any)
+node_modules/
+
+# Development files
+*.log
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
