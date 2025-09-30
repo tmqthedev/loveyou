@@ -1,0 +1,13 @@
+{
+  "name": "love-you-heart-animation",
+  "version": "1.0.0",
+  "description": "Beautiful heart animation with particles effect",
+  "main": "index.html",
+  "scripts": {
+    "start": "serve .",
+    "build": "echo 'No build step required'"
+  },
+  "keywords": ["heart", "animation", "love", "particles", "canvas"],
+  "author": "tmqthedev",
+  "license": "MIT"
+}
