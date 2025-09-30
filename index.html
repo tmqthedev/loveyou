@@ -23,7 +23,7 @@ canvas {
  </HEAD>
  <BODY>
   <!-- Audio player cho nhạc nền -->
-  <audio id="backgroundMusic" autoplay loop preload="auto" muted style="display: none;">
+  <audio id="backgroundMusic" loop preload="auto" style="display: none;">
     <source src="background_music.mp3" type="audio/mpeg">
     <source src="background_music.ogg" type="audio/ogg">
     Trình duyệt của bạn không hỗ trợ audio.
@@ -297,6 +297,8 @@ function toggleMusic() {
     btn.style.background = 'rgba(128,128,128,0.3)';
     isPlaying = false;
   } else {
+    // Unmute before playing when user manually toggles
+    audio.muted = false;
     audio.play().catch(function(error) {
       console.log('Cannot play music:', error);
     });
@@ -307,78 +309,50 @@ function toggleMusic() {
   userInteracted = true;
 }
 
-// Hàm thử phát nhạc
-function attemptAutoplay() {
-  if (!userInteracted && isPlaying) {
-    // Unmute trước khi phát
-    audio.muted = false;
-    
-    var playPromise = audio.play();
-    
-    if (playPromise !== undefined) {
-      playPromise.then(function() {
-        // Autoplay thành công
-        console.log('Music autoplay successful');
-        document.getElementById('playPauseBtn').innerHTML = '🎵 Music: ON';
-        document.getElementById('playPauseBtn').style.background = 'rgba(255,105,180,0.3)';
-      }).catch(function(error) {
-        // Autoplay failed - trying muted
-        console.log('Autoplay failed, trying muted:', error);
-        audio.muted = true;
-        audio.play().catch(function(mutedError) {
-          console.log('Cannot play music even when muted:', mutedError);
-        });
-      });
-    }
-  }
-}
-
-// Xử lý autoplay và khởi tạo
+// Xử lý khởi tạo
 document.addEventListener('DOMContentLoaded', function() {
   // Đặt âm lượng mặc định
   audio.volume = 0.4;
   
-  // Luôn giữ trạng thái ON ban đầu
+  // Hiển thị trạng thái ban đầu với hướng dẫn
   isPlaying = true;
-  document.getElementById('playPauseBtn').innerHTML = '🎵 Music: ON';
+  document.getElementById('playPauseBtn').innerHTML = '🎵 Click to play music';
   document.getElementById('playPauseBtn').style.background = 'rgba(255,105,180,0.3)';
-  
-  // Thử phát nhạc sau 1 giây để đảm bảo page đã load hoàn toàn
-  setTimeout(attemptAutoplay, 1000);
 });
 
-// Phát nhạc khi người dùng tương tác lần đầu
-document.addEventListener('click', function() {
-  if (isPlaying && !userInteracted) {
-    audio.muted = false; // Unmute khi user click
-    if (audio.paused) {
-      audio.play().catch(function(error) {
-        console.log('Cannot play music after click:', error);
-      });
-    }
+// Chỉ phát nhạc khi user click vào nút control
+document.getElementById('playPauseBtn').addEventListener('click', function(event) {
+  if (!userInteracted) {
+    // Lần click đầu tiên - khởi động nhạc
+    audio.muted = false;
+    audio.play().then(function() {
+      console.log('Music started successfully');
+      document.getElementById('playPauseBtn').innerHTML = '🎵 Music: ON';
+      userInteracted = true;
+    }).catch(function(error) {
+      console.log('Cannot start music:', error);
+      // Fallback - vẫn mark là đã interact
+      userInteracted = true;
+      document.getElementById('playPauseBtn').innerHTML = '🔇 Music: Error';
+    });
+  } else {
+    // Các click tiếp theo - toggle bình thường
+    toggleMusic();
   }
-}, { once: true });
+});
 
-// Thử phát nhạc khi user hover vào page (passive interaction)
-document.addEventListener('mousemove', function() {
-  if (isPlaying && !userInteracted) {
-    audio.muted = false; // Unmute khi user di chuyển chuột
-    if (audio.paused) {
-      audio.play().catch(function(error) {
-        console.log('Cannot play music after mousemove:', error);
-      });
-    }
-  }
-}, { once: true });
-
-// Thử phát nhạc khi page focus
-window.addEventListener('focus', function() {
-  if (isPlaying && audio.paused && !userInteracted) {
-    setTimeout(function() {
-      audio.play().catch(function(error) {
-        console.log('Cannot play music after focus:', error);
-      });
-    }, 500);
+// Backup: Phát nhạc khi user click vào canvas (nếu nhạc chưa bắt đầu)
+document.addEventListener('click', function(event) {
+  // Chỉ trigger nếu click không phải vào nút music control
+  if (!userInteracted && event.target.id !== 'playPauseBtn' && isPlaying) {
+    audio.muted = false;
+    audio.play().then(function() {
+      console.log('Music started from page click');
+      document.getElementById('playPauseBtn').innerHTML = '🎵 Music: ON';
+      userInteracted = true;
+    }).catch(function(error) {
+      console.log('Cannot start music from page click:', error);
+    });
   }
 });
   </script>
